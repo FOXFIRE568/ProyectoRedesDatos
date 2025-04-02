@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>MQTT: Suscribir y Publicar</title>
+  <!-- Se incluye la librería MQTT.js desde un CDN -->
+  <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+</head>
+<body>
+  <h1>MQTT: Suscribir y Publicar</h1>
+
+  <!-- Sección para publicar mensajes -->
+  <div>
+    <h2>Publicar Mensaje</h2>
+    <label for="topic">Tópico:</label>
+    <input type="text" id="topic" placeholder="Ingrese el tópico (ej. test/topic)" value="test/topic">
+    <br><br>
+    <label for="message">Mensaje:</label>
+    <input type="text" id="message" placeholder="Ingrese el mensaje">
+    <br><br>
+    <button onclick="publishMessage()">Publicar</button>
+  </div>
+
+  <!-- Sección para mostrar mensajes recibidos -->
+  <div>
+    <h2>Mensajes Recibidos</h2>
+    <ul id="messages"></ul>
+  </div>
+
+  <script>
+    // Datos del broker
+    const brokerIP = '18.216.162.99';
+    // Se utiliza el protocolo WebSocket (ws) en el puerto 8083
+    const brokerURL = 'ws://' + brokerIP + ':8083/mqtt';
+
+    // Opciones de conexión
+    const options = {
+      keepalive: 60,
+      reconnectPeriod: 1000,
+      clientId: 'mqtt_js_' + Math.random().toString(16).substr(2, 8),
+      clean: true,
+      connectTimeout: 30 * 1000,
+    };
+
+    // Conexión al broker
+    const client = mqtt.connect(brokerURL, options);
+
+    client.on('connect', function () {
+      console.log('Conectado al broker MQTT en ' + brokerURL);
+      // Suscribirse a un tópico (puedes cambiarlo según tus necesidades)
+      client.subscribe('test/topic', function (err) {
+        if (!err) {
+          console.log('Suscrito al tópico: test/topic');
+        } else {
+          console.error('Error al suscribir:', err);
+        }
+      });
+    });
+
+    // Manejo de mensajes recibidos
+    client.on('message', function (topic, message) {
+      // Convertir el mensaje (Buffer) a cadena
+      const msg = message.toString();
+      console.log('Mensaje recibido:', topic, msg);
+      const li = document.createElement('li');
+      li.textContent = ${topic}: ${msg};
+      document.getElementById('messages').appendChild(li);
+    });
+
+    // Función para publicar un mensaje
+    function publishMessage() {
+      const topic = document.getElementById('topic').value || 'test/topic';
+      const message = document.getElementById('message').value;
+      if (message.trim() === "") return;
+      client.publish(topic, message, function (err) {
+        if (err) {
+          console.error('Error al publicar:', err);
+        } else {
+          console.log('Mensaje publicado en', topic, message);
+        }
+      });
+    }
+  </script>
+</body>
+</html>
