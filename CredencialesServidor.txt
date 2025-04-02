@@ -1,0 +1,21 @@
+Servidor:
+ip 18.216.162.99:18083
+
+so ubuntu 20.4
+
+Ports:
+80 http
+443 https
+22 sftp
+18083 dashboard matt
+1883 tcp
+8083 matt nosecure
+8084 matt secure
+
+configuracion server:
+instalacion LAMP
+configuracion puertos
+brolcer emax
+
+AWS
+correo univesserver@gmail.com
