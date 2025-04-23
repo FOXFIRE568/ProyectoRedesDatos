@@ -2,38 +2,34 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>MQTT: Suscribir y Publicar</title>
-  <!-- Se incluye la librería MQTT.js desde un CDN -->
+  <title>Monitoreo de Humo y Gas</title>
   <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; text-align: center; margin: 40px; }
+    img { width: 150px; margin-top: 10px; }
+    input, button { padding: 8px; margin: 8px; }
+  </style>
 </head>
 <body>
-  <h1>MQTT: Suscribir y Publicar</h1>
+  <h1>Monitoreo de Humo y Gas</h1>
 
-  <!-- Sección para publicar mensajes -->
+  <!-- Sección de datos -->
   <div>
-    <h2>Publicar Mensaje</h2>
-    <label for="topic">Tópico:</label>
-    <input type="text" id="topic" placeholder="Ingrese el tópico (ej. test/topic)" value="test/topic">
-    <br><br>
-    <label for="message">Mensaje:</label>
-    <input type="text" id="message" placeholder="Ingrese el mensaje">
-    <br><br>
-    <button onclick="publishMessage()">Publicar</button>
+    <h2>Humo: <span id="humo">--</span></h2>
+    <h2>Gas: <span id="gas">--</span></h2>
   </div>
 
-  <!-- Sección para mostrar mensajes recibidos -->
+  <!-- Botón toggle para encender/apagar -->
   <div>
-    <h2>Mensajes Recibidos</h2>
-    <ul id="messages"></ul>
+    <button id="toggleBtn">Encender</button>
+    <br>
+    <img id="bulb" src="apagado.jpg" alt="Foco apagado">
   </div>
 
   <script>
-    // Datos del broker
     const brokerIP = '18.216.162.99';
-    // Se utiliza el protocolo WebSocket (ws) en el puerto 8083
     const brokerURL = 'ws://' + brokerIP + ':8083/mqtt';
 
-    // Opciones de conexión
     const options = {
       keepalive: 60,
       reconnectPeriod: 1000,
@@ -42,44 +38,40 @@
       connectTimeout: 30 * 1000,
     };
 
-    // Conexión al broker
     const client = mqtt.connect(brokerURL, options);
 
     client.on('connect', function () {
-      console.log('Conectado al broker MQTT en ' + brokerURL);
-      // Suscribirse a un tópico (puedes cambiarlo según tus necesidades)
-      client.subscribe('test/topic', function (err) {
-        if (!err) {
-          console.log('Suscrito al tópico: test/topic');
-        } else {
-          console.error('Error al suscribir:', err);
-        }
-      });
+      console.log('Conectado al broker MQTT');
+      client.subscribe('humo');
+      client.subscribe('gas');
     });
 
-    // Manejo de mensajes recibidos
     client.on('message', function (topic, message) {
-      // Convertir el mensaje (Buffer) a cadena
       const msg = message.toString();
       console.log('Mensaje recibido:', topic, msg);
-      const li = document.createElement('li');
-      li.textContent = ${topic}: ${msg};
-      document.getElementById('messages').appendChild(li);
+
+      if (topic === 'humo') document.getElementById('humo').textContent = msg;
+      if (topic === 'gas') document.getElementById('gas').textContent = msg;
     });
 
-    // Función para publicar un mensaje
-    function publishMessage() {
-      const topic = document.getElementById('topic').value || 'test/topic';
-      const message = document.getElementById('message').value;
-      if (message.trim() === "") return;
-      client.publish(topic, message, function (err) {
-        if (err) {
-          console.error('Error al publicar:', err);
-        } else {
-          console.log('Mensaje publicado en', topic, message);
-        }
-      });
-    }
+    const toggleBtn = document.getElementById('toggleBtn');
+    const bulbImg = document.getElementById('bulb');
+    let ledOn = false;
+
+    toggleBtn.addEventListener("click", () => {
+      ledOn = !ledOn;
+      if (ledOn) {
+        client.publish("led", "on");
+        toggleBtn.textContent = "Apagar";
+        bulbImg.src = "prendido.jpg";
+        bulbImg.alt = "Foco encendido";
+      } else {
+        client.publish("led", "off");
+        toggleBtn.textContent = "Encender";
+        bulbImg.src = "apagado.jpg";
+        bulbImg.alt = "Foco apagado";
+      }
+    });
   </script>
 </body>
 </html>
